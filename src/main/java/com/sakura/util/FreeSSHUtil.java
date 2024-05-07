@@ -90,7 +90,7 @@ public class FreeSSHUtil {
     }
 
     public static void main(String[] args) {
-    	cmd("172.18.1.118", "king", "111111", "git clone http://172.19.5.226:8099/Test/Sakura.Web.UI.Automation.Test.git");
+    	cmd("172.18.1.118", "king", "111111", "git clone http://172.19.5.222:8099/Test/Ankki.Web.UI.Automation.Test.git");
 //        cmd("10.18.22.32", "King-liu", "111111", "taskkill /f /IM node.exe");
 //        cmd("10.18.22.32", "King-liu", "111111",
 //            "node C:/Users/King-liu/AppData/Local/Programs/Appium/resources/app/node_modules/appium/build/lib/main.js --address 10.18.22.32 --port 4723>D:/appium.txt");

@@ -176,6 +176,7 @@ public class WebXmlParseService {
 	 * @return
 	 */
 	public static TestUnit parse(String BrowserName,Boolean profile,String XmlPath) {
+		RunUnitService.durationStartTime = DateUtil.getDate();
 		if("firefox".equals(BrowserName)){
 			if(!profile){
 				log.info("初始化火狐浏览器，不加载个人配置信息，耐心等待启动ing..."); 
@@ -480,6 +481,7 @@ public class WebXmlParseService {
 //			driver.quit();
 			ThreadDriver.get().quit();
 			ThreadDriver.remove();
+//			RunUnitService.Unit.put("durationEndTime", DateUtil.getDate());
 			log.info("『测试结束』开始执行: <结束进程，关闭浏览器>");
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -568,10 +568,11 @@ public class DBHelper {
                 sm = con.createStatement();
             } else if ("测试环境".equals(DataEnviron)) {
                 Class.forName(MySql_TDRIVER);
-                String MySql_TURL = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);                
+                String MySql_TURL = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
+                String MySql_TORT = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tport", ConstantsUtil.CONFIG_JDBC);        
                 String MySql_TUSERNAME = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
                 String MySql_TPASSWORD = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tpassword", ConstantsUtil.CONFIG_JDBC);
-                con = DriverManager.getConnection("jdbc:mysql://"+ MySql_TURL + ":"+Port+"/" + DataBase + "?useUnicode=true&characterEncoding=utf-8&useSSL=false", MySql_TUSERNAME, MySql_TPASSWORD);
+                con = DriverManager.getConnection("jdbc:mysql://"+ MySql_TURL + ":"+MySql_TORT+"/" + DataBase + "?useUnicode=true&characterEncoding=utf-8&useSSL=false", MySql_TUSERNAME, MySql_TPASSWORD);
                 sm = con.createStatement();
             } else if ("开发环境".equals(DataEnviron)) {
                 Class.forName(MySql_DDRIVER);

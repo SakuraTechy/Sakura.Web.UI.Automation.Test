@@ -34,9 +34,6 @@ public class GetCodeActionHandler {
 		Boolean state = true;
 		outer : while (state) {
 			try {
-				log.info("『正常测试』开始执行: " + "<" + step.getId() + "." + step.getName() + ">");
-				RunUnitService.Step.put("name", "" + step.getId() + "." + step.getName() + "");
-
 				String Python_Path = ConfigUtil.getProperty("Python_Path", Constants.CONFIG_APP);
 				String Python_Run = System.getProperty("user.dir") + "/TestData/Code/getCode.py";
 				String Python_Run_IMG = System.getProperty("user.dir") + "/TestData/Code/getCode.png";
@@ -44,10 +41,14 @@ public class GetCodeActionHandler {
 				String code = "1234";
 
 				Thread.sleep(2000);
-				String src = step.getWebDriver().findElement(By.xpath(step.getUrl())).getAttribute("src").replace("%0A",
-						"");
+				String src = step.getWebDriver().findElement(By.xpath(step.getUrl())).getAttribute("src").replace("%0A","");
 
-				Python_Run_IMG = ImageUtil.GenerateImage(src, Python_Run_IMG);
+				// 判断字符串是否以 "https://" 开头
+		        boolean isHttps = src.startsWith("https://");
+		        if (isHttps) {
+		        	src = ImageUtil.imageUrlToBase64(src);
+		        }
+		        Python_Run_IMG = ImageUtil.GenerateImage(src, Python_Run_IMG);
 				String[] args = new String[] { Python_Path, Python_Run, Python_Run_IMG, Python_Run_IMG_CODE };
 				Process proc = Runtime.getRuntime().exec(args);
 				BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -58,6 +59,9 @@ public class GetCodeActionHandler {
 				in.close();
 				proc.waitFor();
 
+				log.info("『正常测试』开始执行: " + "<" + step.getId() + "." + step.getName() + ">[" + code+"]");
+				RunUnitService.Step.put("name", "" + step.getId() + "." + step.getName() + ">[" + code+"]");
+				
 				Thread.sleep(2000);
 				WebElement e = SeleniumUtil.getElement(step);
 				if (e != null && !code.equals("1234")) {
@@ -66,15 +70,17 @@ public class GetCodeActionHandler {
 					e.sendKeys(code);
 				}
 
-				step.getWebDriver().manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+//				step.getWebDriver().manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 				step.getWebDriver().findElement(By.xpath(step.getElement())).click();
 				
-				Thread.sleep(2000);
+				Thread.sleep(500);
 				String Actual = step.getWebDriver().findElement(By.xpath(step.getValue())).getText();
+				log.info(Actual);
 				String Expected = SeleniumUtil.parseStringHasEls(step.getExpect());
 				List<String> ExpectedList = Arrays.asList(Expected.split(","));
 				for(String Expect : ExpectedList) {
-					if (Actual.equals(Expect)) {
+					log.info(Expect);
+					if (Actual.equals("") || Actual.equals(Expect)) {
 						step.getWebDriver().findElement(By.xpath(step.getMessage())).click();
 						state = true;
 						continue outer;
@@ -83,6 +89,7 @@ public class GetCodeActionHandler {
 					}
 				}
 				state = false;
+//				log.info(state);
 			} catch (Exception e) {
 //				log.error("", e);
 				step.getWebDriver().manage().timeouts().implicitlyWait(20, TimeUnit.SECONDS);

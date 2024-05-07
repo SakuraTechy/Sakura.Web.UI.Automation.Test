@@ -142,11 +142,12 @@ public class SeleniumUtil {
 				RunUnitService.Step.put("name", "" + step.getId() + "." + step.getName() + ">【" + locatevalue + "】");
 				WebXmlParseService.screenShot(RunUnitService.testUnit.getId(), RunUnitService.testCase.getId(),"Step" + step.getId() + "." + step.getName() + "");
 				RunUnitService.softAssert.fail("『发现问题』执行异常: " + "<" + step.getId() + "." + step.getName() + "==> 未找到元素：【" + locatevalue + "】");
-				log.error("", b);
+				RunUnitService.stepFail++;
 			} else if (StringUtil.isEqual("true", step.getSkip())) {
 				log.error("『发现问题』执行异常: " + "<" + step.getId() + "." + step.getName() + "==> 【未找到相关元素信息，目前已忽略跳过，请仔细检查测试脚本..】");
 				RunUnitService.Step.put("name", "" + step.getId() + "." + step.getName() + "==> 【未找到相关元素信息，目前已忽略跳过，请仔细检查测试脚本..】");
 				RunUnitService.Step.put("picture", "skip");
+				RunUnitService.stepSkip++;
 			}
 			Thread.sleep(500);
 		}

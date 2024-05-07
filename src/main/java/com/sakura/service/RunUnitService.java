@@ -2,6 +2,7 @@ package com.sakura.service;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,10 @@ import com.sakura.base.StepAction;
 import com.sakura.base.TestCase;
 import com.sakura.base.TestStep;
 import com.sakura.base.TestUnit;
+import com.sakura.util.ConfigUtil;
+import com.sakura.util.Constants;
+import com.sakura.util.DateUtil;
+import com.sakura.util.HttpRequestUtil;
 
 /**
  * <br>TODO(描述该类的作用)</br>
@@ -46,10 +51,52 @@ public class RunUnitService {
     static int UnitsIndex = 0;
     static int CaseIndex = 0;
 
+    int sceneTotal = 0;
+    int scenePass = 0;
+    int sceneFail = 0;
+    int sceneSkip = 0;
+    String scenePassRate="";
+    
+    int caseTotal = 0;
+    int casePass = 0;
+    int caseFail = 0;
+    int caseSkip = 0;
+    String casePassRate="";
+    
+    int stepTotal = 0;
+    int stepPass = 0;
+    public static int stepFail = 0;
+    public static int stepSkip = 0;
+    String stepPassRate="";
+    
+    static int stepTotal1 = 0;
+    int stepPass1 = 0;
+    public static int stepFail1 = 0;
+    public static int stepSkip1 = 0;
+    String stepPassRate1="";
+    
+    static int stepTotal2 = 0;
+    static String durationStartTime = "";
+    static String durationEndTime = "";
+    
+    static String testReportdurationStartTime = "";
+    
 	public RunUnitService(TestUnit testUnit) {
         Unit = new JSONObject(true);
+        Unit.put("durationStartTime", durationStartTime);
+//        Unit.put("durationStartTime", DateUtil.getDate());
         Cases = new JSONArray();
         CaseIndex = 0;
+        
+        caseTotal = 0;
+        casePass = 0;
+        caseFail = 0;
+        caseSkip = 0;
+        
+        stepTotal1= 0;
+        stepPass1= 0;
+        stepFail1= 0;
+        stepSkip1= 0;
         RunUnitService.testUnit = testUnit;
     }
 
@@ -107,6 +154,8 @@ public class RunUnitService {
         log.info("<---"+testCase.getId()+"，"+testCase.getName()+"--->");
         List<TestStep> steps = testCase.getSteps();
         int StepIndex = 1;
+        stepFail = 0;
+        stepSkip = 0;
         for (TestStep step : steps) {
             Step = new JSONObject(true);
             step.setId(String.valueOf(StepIndex));
@@ -136,11 +185,28 @@ public class RunUnitService {
                 StepIndex++;
             }
         }
+        stepTotal = steps.size();
+        stepPass = stepTotal-stepFail-stepSkip;
+        stepFail = stepTotal-stepPass-stepSkip;
+        stepSkip = stepTotal-stepPass-stepFail;
+        stepPassRate = String.format("%.2f%%", (double)(stepTotal-stepFail-stepSkip)/stepTotal*100);
+//        stepTotal1 += stepTotal;
+        stepPass1 += stepPass;
+        stepFail1 += stepFail;
+        stepSkip1 += stepSkip;
+        
         Case.put("id", id);
         Case.put("name", testCase.getName());
+        Case.put("stepTotal", stepTotal);
+        Case.put("stepPass", stepPass);
+        Case.put("stepFail", stepFail);
+        Case.put("stepSkip", stepSkip);
+        Case.put("stepPassRate", stepPassRate);
         Case.put("steps", Steps);
         Cases.add(CaseIndex, Case);
         CaseIndex = CaseIndex + 1;
+        caseFail = stepFail>0?caseFail+1:caseFail;
+        casePass = stepSkip>0?casePass+1:casePass;
         TestReportRemarks(testCase.getName());
         softAssert.assertAll();
     }
@@ -193,14 +259,129 @@ public class RunUnitService {
      * @throws JSONException
      */
     public void setUnit(Boolean ...State) {
+    	closeBrowser();
         if(State.length>0){
             UnitsIndex = 0;
+            testReportdurationStartTime = durationStartTime;
         }
         try {
+        	caseTotal = CaseIndex;
+        	casePass = caseTotal-caseFail-caseSkip;
+        	caseFail = caseTotal-casePass-caseSkip;
+        	caseSkip = caseTotal-casePass-caseFail;
+//            casePassRate = String.format("%.2f%%", (double)(caseTotal-caseFail-caseSkip)/caseTotal*100);
+          
+        	LinkedHashMap<String, TestCase> caseMap = testUnit.getCaseMap();
+            caseTotal = caseMap.size();
+            caseSkip = caseTotal-casePass-caseFail;
+            casePassRate = String.format("%.2f%%", (double)(caseTotal-caseFail-caseSkip)/caseTotal*100);
+                    	
+            int num=0;
+            for (String caseKey : caseMap.keySet()) {
+            	num += caseMap.get(caseKey).getSteps().size();
+            }
+            stepTotal1 = num;
+            stepSkip1 = stepTotal1-stepPass1-stepFail1;
+        	stepPassRate1 = String.format("%.2f%%", (double)(stepTotal1-stepFail1-stepSkip1)/stepTotal1*100);
+        	stepTotal2 += stepTotal1;
+        	
             Unit.put("id", testUnit.getId());
             Unit.put("name", testCase.getName());
+            Unit.put("caseTotal", caseTotal);
+            Unit.put("casePass", casePass);
+            Unit.put("caseFail", caseFail);
+            Unit.put("caseSkip", caseSkip);
+            Unit.put("casePassRate", casePassRate);
             Unit.put("cases", Cases);
+            durationEndTime = DateUtil.getDate();
+            Unit.put("durationEndTime", durationEndTime);
             Units.add(UnitsIndex, Unit);
+//            log.info(Units);
+            
+            sceneTotal = 1;
+            scenePass = caseFail>0 ? 0 : 1;
+            sceneFail = sceneTotal-scenePass-sceneSkip;
+            sceneSkip = sceneTotal-scenePass-sceneFail;
+            scenePassRate = String.format("%.2f%%", (double)(sceneTotal-sceneFail-sceneSkip)/sceneTotal*100);
+            
+            Json.put("sceneTotal", sceneTotal);
+            Json.put("scenePass", scenePass);
+            Json.put("sceneFail", sceneFail);
+            Json.put("sceneSkip", sceneSkip);
+            Json.put("scenePassRate", scenePassRate);
+            Json.put("units", Units);
+//            log.info(Json);
+            
+            try {
+            	String Product_Name = ConfigUtil.getProperty("Product_Name", Constants.CONFIG_APP);
+                String Product_Version =  ConfigUtil.getProperty("Product_Version", Constants.CONFIG_APP);
+                String SysScene_UploadResult_API =  ConfigUtil.getProperty("SysScene_UploadResult_API", Constants.CONFIG_APP);
+                String buildNumber =  ConfigUtil.getProperty("buildNumber", Constants.CONFIG_APP);
+                String testPlanId =  ConfigUtil.getProperty("testPlanId", Constants.CONFIG_APP);
+                 
+                String ApiUrl = SysScene_UploadResult_API;
+        		String Param = "{\n"
+        				+ "  \"projectName\": \""+Product_Name+"\",\n"
+        				+ "  \"versionName\": \""+Product_Version+"\",\n"
+        				+ "  \"sceneId\": \""+testUnit.getId()+"\",\n"
+        				+ "  \"testPlanId\": \""+testPlanId+"\",\n"
+        				+ "  \"statisticAnalysis\": {\n"
+        				+ "    \"ui\": {\n"
+        				+ "      \"buildNumber\": "+buildNumber+",\n"
+        				+ "      \"sceneTotal\": "+sceneTotal+",\n"
+        				+ "      \"scenePass\": "+scenePass+",\n"
+        				+ "      \"sceneFail\": "+sceneFail+",\n"
+        				+ "      \"sceneSkip\": "+sceneSkip+",\n"
+        				+ "      \"scenePassRate\": \""+scenePassRate+"\",\n"
+        				+ "      \"caseTotal\": "+caseTotal+",\n"
+        				+ "      \"casePass\": "+casePass+",\n"
+        				+ "      \"caseFail\": "+caseFail+",\n"
+        				+ "      \"caseSkip\": "+caseSkip+",\n"
+        				+ "      \"casePassRate\": \""+casePassRate+"\",\n"
+        				+ "      \"stepTotal\": "+stepTotal1+",\n"
+        				+ "      \"stepPass\": "+stepPass1+",\n"
+        				+ "      \"stepFail\": "+stepFail1+",\n"
+        				+ "      \"stepSkip\": "+stepSkip1+",\n"
+        				+ "      \"stepPassRate\": \""+stepPassRate1+"\",\n"
+        				+ "      \"durationStartTime\": \""+durationStartTime+"\",\n"
+        				+ "      \"durationEndTime\": \""+durationEndTime+"\"\n"
+        				+ "    }\n"
+        				+ "  }\n"
+        				+ "}";
+					HttpRequestUtil.SendPut(ApiUrl,Param);
+					
+					String TestReport_UploadResult_API =  ConfigUtil.getProperty("TestReport_UploadResult_API", Constants.CONFIG_APP);
+				    String testReportId =  ConfigUtil.getProperty("testReportId", Constants.CONFIG_APP);
+					ApiUrl = TestReport_UploadResult_API;
+		    		Param = "{\n"
+		    				+ "  \"id\": \""+testReportId+"\",\n"
+		    				+ "  \"statisticAnalysis\": {\n"
+		    				+ "    \"ui\": {\n"
+		    				+ "      \"buildNumber\": "+buildNumber+",\n"
+		    				+ "      \"sceneTotal\": "+sceneTotal+",\n"
+		    				+ "      \"scenePass\": "+scenePass+",\n"
+		    				+ "      \"sceneFail\": "+sceneFail+",\n"
+		    				+ "      \"sceneSkip\": "+sceneSkip+",\n"
+		    				+ "      \"scenePassRate\": \""+scenePassRate+"\",\n"
+		    				+ "      \"caseTotal\": "+caseTotal+",\n"
+		    				+ "      \"casePass\": "+casePass+",\n"
+		    				+ "      \"caseFail\": "+caseFail+",\n"
+		    				+ "      \"caseSkip\": "+caseSkip+",\n"
+		    				+ "      \"casePassRate\": \""+casePassRate+"\",\n"
+		    				+ "      \"stepTotal\": "+stepTotal1+",\n"
+		    				+ "      \"stepPass\": "+stepPass1+",\n"
+		    				+ "      \"stepFail\": "+stepFail1+",\n"
+		    				+ "      \"stepSkip\": "+stepSkip1+",\n"
+		    				+ "      \"stepPassRate\": \""+stepPassRate1+"\",\n"
+		    				+ "      \"durationStartTime\": \""+testReportdurationStartTime+"\",\n"
+		    				+ "      \"durationEndTime\": \""+durationEndTime+"\"\n"
+		    				+ "    }\n"
+		    				+ "  }\n"
+		    				+ "}";
+		    		HttpRequestUtil.SendPut(ApiUrl,Param);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
             UnitsIndex = UnitsIndex+1;
         } catch (JSONException e) {
             //e.printStackTrace();

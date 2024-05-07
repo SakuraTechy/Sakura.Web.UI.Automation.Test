@@ -1,11 +1,17 @@
 package com.sakura.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.security.cert.X509Certificate;
 
 import org.apache.log4j.Logger;
 
@@ -13,11 +19,17 @@ import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 public class ImageUtil {
 	static Logger log = Logger.getLogger(ImageUtil.class);
 
-	public static void main(String[] args) {
-		String base64 = "data:image/jpg;base64,/9j/4AAQSkZJRgABAgAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a\r\n"
+	public static void main(String[] args) throws IOException {
+		String base64Image = "data:image/jpg;base64,/9j/4AAQSkZJRgABAgAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a\r\n"
 				+ "HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIy\r\n"
 				+ "MjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAZAF8DASIA\r\n"
 				+ "AhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQA\r\n"
@@ -52,7 +64,17 @@ public class ImageUtil {
 				+ "/wCgCgG7vUx4tO014oopHuoVYkWtzbSSQorHK8ouEilBJUgqAzHpklR0tvG0NtFE772RApbnkgde\r\n"
 				+ "ST+ZJ9zWBff8grxb/wBtP/SWOujoA//Z";
 
-		GenerateImage(base64, "/TestData/Png/11.png");
+//		GenerateImage(base64, "/TestData/Png/11.png");
+		
+		String imageUrl = "https://172.19.5.60:8443/getCheckCode?codeId=c112667c-18c3-4a0e-aa3b-e2e88d8f8734";
+		base64Image = imageUrlToBase64(imageUrl);
+        System.out.println("Base64 Encoded Image: " + base64Image);
+        
+        GenerateImage(base64Image, "TestData/Code/11.png");
+        
+//		String imageUrl = "https://172.19.5.60:8443/getCheckCode?codeId=c112667c-18c3-4a0e-aa3b-e2e88d8f8734";
+//        String targetPath = "D:\\Jenkins\\workspace\\Ankki.Web.UI.Automation.Test\\TestData\\Code"; // 替换为实际的保存路径及文件名
+//        downloadImage(imageUrl, targetPath);
 	}
 
 	// 图片转化成base64字符串
@@ -97,7 +119,7 @@ public class ImageUtil {
 			out.flush();
 			out.close();
 		} catch (Exception e) {
-			log.info(e);
+			log.error(e);
 		}
 		return imgFilePath;
 	}
@@ -162,4 +184,56 @@ public class ImageUtil {
 			return false;
 		}
 	}
+	
+	// 忽略SSL证书验证并设置自定义主机名验证逻辑的临时解决方案（仅限测试环境）
+    private static void setupInsecureSSL(String host) {
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        }};
+
+        HostnameVerifier hv = (hostname, session) -> hostname.equals(host); // 替换为实际的主机名
+
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            HttpsURLConnection.setDefaultHostnameVerifier(hv);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+	  public static String imageUrlToBase64(String imageUrl) throws IOException {
+	        URL url = new URL(imageUrl);
+	        setupInsecureSSL(url.getHost()); // 只有在你需要临时解决这个问题时调用这个方法
+	        
+	        try (InputStream in = url.openStream();
+	             ReadableByteChannel rbc = Channels.newChannel(in)) {
+
+	            ByteBuffer bb = ByteBuffer.allocate(1024); // 创建一个缓冲区
+	            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+	            while (rbc.read(bb) != -1) { // 读取数据到缓冲区
+	                bb.flip(); // 切换到读模式
+	                byte[] buffer = new byte[bb.remaining()];
+	                bb.get(buffer); // 将缓冲区中的数据复制到临时数组中
+	                baos.write(buffer, 0, buffer.length); // 将临时数组写入ByteArrayOutputStream
+
+	                bb.clear(); // 清空缓冲区为下一次读取做准备
+	            }
+
+	            byte[] imageBytes = baos.toByteArray();
+	            
+	            return Base64.getEncoder().encodeToString(imageBytes);
+	        }
+	    }
 }

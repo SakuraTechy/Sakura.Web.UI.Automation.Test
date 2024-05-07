@@ -2,12 +2,12 @@ package com.sakura.service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.sakura.util.ConfigUtil;
 import com.sakura.util.Constants;
 import com.sakura.util.CopyFile;
 import com.sakura.util.DateUtil;
-import com.sakura.util.HttpRequestUtil;
 import com.sakura.util.JSchUtil;
 import com.sakura.util.JsonUtil;
 import com.sakura.util.StringUtil;
@@ -59,6 +59,7 @@ public class ExtentReportGenerateService implements IReporter {
     String buildNumber =  ConfigUtil.getProperty("buildNumber", Constants.CONFIG_APP);
     String TestReport_UploadResult_API =  ConfigUtil.getProperty("TestReport_UploadResult_API", Constants.CONFIG_APP);
     String testReportId =  ConfigUtil.getProperty("testReportId", Constants.CONFIG_APP);
+    String testPlanId =  ConfigUtil.getProperty("testPlanId", Constants.CONFIG_APP);
     String date;
     
     String jsonContent;
@@ -95,10 +96,11 @@ public class ExtentReportGenerateService implements IReporter {
     
     @SuppressWarnings("unused")
     public void generateReport(List<XmlSuite> xmlSuites, List<ISuite> suites, String outputDirectory){
-        RunUnitService.Json.put("name", "name");
-        RunUnitService.Json.put("units", RunUnitService.Units);
-        jsonContent = JSON.toJSONString(RunUnitService.Json, SerializerFeature.DisableCircularReferenceDetect);;
-        log.info(jsonContent);
+    	JSONObject Json = new JSONObject(true);
+    	Json.put("name", "name");
+    	Json.put("units", RunUnitService.Units);
+        jsonContent = JSON.toJSONString(Json, SerializerFeature.DisableCircularReferenceDetect);;
+//        log.info(jsonContent);
         init(suites);
 
         for (ISuite suite : suites) {
@@ -115,10 +117,7 @@ public class ExtentReportGenerateService implements IReporter {
                 continue;
             }
             
-            // 统计suite下的成功、失败、跳过的总用例数
-            int suiteFailSize = 0;
-            int suitePassSize = 0;
-            int suiteSkipSize = 0;
+            
             
             boolean createSuiteResultNode = false;
             if (result.size() > 0) {
@@ -126,6 +125,11 @@ public class ExtentReportGenerateService implements IReporter {
             }
             
             for (ISuiteResult r : result.values()) {
+            	// 统计suite下的成功、失败、跳过的总用例数
+                int suiteFailSize = 0;
+                int suitePassSize = 0;
+                int suiteSkipSize = 0;
+                
             	int sceneTotal = 1;
             	int scenePass = 0;
             	int sceneFail1 = 0;
@@ -209,7 +213,7 @@ public class ExtentReportGenerateService implements IReporter {
                     log.error("",e);
                 }
 //                resultNode.getModel().setDescription(String.format("Pass: %s ; Fail: %s ; Skip: %s ;", suitePassSize, suiteFailSize, suiteSkipSize));
-                resultNode.getModel().setDescription(String.format("Pass: %s ; Fail: %s ; Skip: %s ; Warning: %s ;", suitePassSize, suiteFailSize, suiteSkipSize, step_skip));
+                resultNode.getModel().setDescription(String.format("Pass: %s ; Fail: %s ; Skip: %s ; Pass(Warning): %s ;", suitePassSize, suiteFailSize, suiteSkipSize, step_skip));
                
                 case_pass1 += r.getTestContext().getPassedTests().size();
                 case_fail1 += r.getTestContext().getFailedTests().size();
@@ -241,7 +245,10 @@ public class ExtentReportGenerateService implements IReporter {
                 log.info("单个场景用例步骤跳过数："+step_skip1);
                 log.info("单个场景用例步骤通过率："+stepPassRate);
                 
+                try {
                 String ApiUrl = SysScene_UploadResult_API;
+                String durationStartTime = JsonUtil.getNodeValue(jsonContent, "units["+UnitsIndex+"].durationStartTime");
+                String durationEndTime = JsonUtil.getNodeValue(jsonContent, "units["+UnitsIndex+"].durationEndTime");
         		String Param1 = "{"
         				+ "\"projectName\":\""+Product_Name+"\","
         				+ "\"versionName\":\""+Product_Version+"\","
@@ -262,7 +269,8 @@ public class ExtentReportGenerateService implements IReporter {
         				+ "  \"projectName\": \""+Product_Name+"\",\n"
         				+ "  \"versionName\": \""+Product_Version+"\",\n"
         				+ "  \"sceneId\": \""+sceneId+"\",\n"
-        				+ "  \"testReport\": {\n"
+        				+ "  \"testPlanId\": \""+testPlanId+"\",\n"
+        				+ "  \"statisticAnalysis\": {\n"
         				+ "    \"ui\": {\n"
         				+ "      \"buildNumber\": "+buildNumber+",\n"
         				+ "      \"sceneTotal\": "+sceneTotal+",\n"
@@ -279,13 +287,13 @@ public class ExtentReportGenerateService implements IReporter {
         				+ "      \"stepPass\": "+step_pass1+",\n"
         				+ "      \"stepFail\": "+step_fail1+",\n"
         				+ "      \"stepSkip\": "+step_skip1+",\n"
-        				+ "      \"stepPassRate\": \""+stepPassRate+"\"\n"
+        				+ "      \"stepPassRate\": \""+stepPassRate+"\",\n"
+        				+ "      \"durationStartTime\": \""+durationStartTime+"\",\n"
+        				+ "      \"durationEndTime\": \""+durationEndTime+"\"\n"
         				+ "    }\n"
         				+ "  }\n"
         				+ "}";
-        		
-                try {
-					HttpRequestUtil.SendPut(ApiUrl,Param);
+//					HttpRequestUtil.SendPut(ApiUrl,Param);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -320,6 +328,8 @@ public class ExtentReportGenerateService implements IReporter {
             String casePassRate = String.format("%.2f%%", (double)casePass/caseTotal*100);
             log.info("所有场景用例通过率："+casePassRate);
             
+            stepTotal = RunUnitService.stepTotal2;
+            stepSkip = stepTotal-stepPass-stepFail;
             log.info("所有场景用例步骤总数："+stepTotal);
             log.info("所有场景用例步骤成功数："+stepPass);
             log.info("所有场景用例步骤失败数："+stepFail);
@@ -352,16 +362,16 @@ public class ExtentReportGenerateService implements IReporter {
     				+ "  }\n"
     				+ "}";
             try {
-				HttpRequestUtil.SendPut(ApiUrl,Param);
+//				HttpRequestUtil.SendPut(ApiUrl,Param);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-            if (suiteTest != null) {                
-                suiteTest.getModel().setDescription(String.format("Pass: %s ; Fail: %s ; Skip: %s ; Warning: %s ;", suitePassSize, suiteFailSize, suiteSkipSize, step_skip));
-                if (suiteFailSize > 0) {
-                    suiteTest.getModel().setStatus(Status.FAIL);
-                }
-            }
+//            if (suiteTest != null) {                
+////                suiteTest.getModel().setDescription(String.format("Pass: %s ; Fail: %s ; Skip: %s ; Warning: %s ;", suitePassSize, suiteFailSize, suiteSkipSize, step_skip));
+//                if (suiteFailSize > 0) {
+//                    suiteTest.getModel().setStatus(Status.FAIL);
+//                }
+//            }
         }
         
         String appium = ""+System.getProperty("user.dir") + "/Logs/appium.txt"; 
@@ -556,7 +566,7 @@ public class ExtentReportGenerateService implements IReporter {
 //        a = a+1;
 //        log.info(a);
 //        
-//        String ApiUrl = "http://172.19.5.226:8084/system/automation/uploadResults";
+//        String ApiUrl = "http://172.19.5.222:8084/system/automation/uploadResults";
 //		String Param = "{\"projectName\":\"AAS_TEST\",\"versionName\":\"V6_5_1SP001D003\",\"sceneId\":\"AAS_WS_SMOKE_026\",\"casePass\":4112,\"caseFail\":0,\"caseSkip\":0,\"stepPass\":10,\"stepFail\":0,\"stepSkip\":2}";
 //        try {
 //			HttpRequestUtil.SendPut(ApiUrl,Param);

@@ -250,12 +250,14 @@ public class CheckActionHandler {
 				log.error("『发现问题』执行异常: " + "<" + step.getId() + "." + step.getName() + "==> 【目前有报错，已忽略跳过，请仔细检查测试脚本..】");
 				RunUnitService.Step.put("name", "" + step.getId() + "." + step.getName() + " ==> 【目前有报错，已忽略跳过，请仔细检查测试脚本..】");
 				RunUnitService.Step.put("picture", "skip");
+				RunUnitService.stepSkip++;
 			} else {
 				log.info("『发现问题』执行异常: "+FailHint +"  "+"Actual 【"+ Actual +"】"+"  "+"but found 【"+ Expected +"】");
 //	 	        Assert.fail(FailHint +"  "+"Actual 【"+ Actual +"】"+"  "+"but found 【"+ Expected +"】");
 	 	        RunUnitService.softAssert.fail("『发现问题』执行异常: "+FailHint +"  "+"Actual 【"+ Actual +"】"+"  "+"but found 【"+ Expected +"】");
 	 	        RunUnitService.Step.put("name",name);
 				WebXmlParseService.screenShot(RunUnitService.testUnit.getId(), RunUnitService.testCase.getId(),FailHint);
+				RunUnitService.stepFail++;
 			}
         	//e.printStackTrace();
  	        log.error("",e);
@@ -273,12 +275,14 @@ public class CheckActionHandler {
 				log.error("『发现问题』执行异常: " + "<" + step.getId() + "." + step.getName() + "==> 【目前有报错，已忽略跳过，请仔细检查测试脚本..】");
 				RunUnitService.Step.put("name", "" + step.getId() + "." + step.getName() + " ==> 【目前有报错，已忽略跳过，请仔细检查测试脚本..】");
 				RunUnitService.Step.put("picture", "skip");
+				RunUnitService.stepSkip++;
 			} else {
 				log.info("『发现问题』执行异常: "+FailHint +"  "+"Actual 【"+ Actual +"】"+"  "+"but found 【"+ Expected +"】");
 //	 	        Assert.fail(FailHint +"  "+"Actual 【"+ Actual +"】"+"  "+"but found 【"+ Expected +"】");
 	 	        RunUnitService.softAssert.fail("『发现问题』执行异常: "+FailHint +"  "+"Actual 【"+ Actual +"】"+"  "+"but found 【"+ Expected +"】");
 	 	        RunUnitService.Step.put("name",name);
-	 	       WebXmlParseService.screenShot(RunUnitService.testUnit.getId(), RunUnitService.testCase.getId(),FailHint);
+	 	        WebXmlParseService.screenShot(RunUnitService.testUnit.getId(), RunUnitService.testCase.getId(),FailHint);
+	 	        RunUnitService.stepFail++;
 			}
         	//e.printStackTrace();
  	        log.error("",e);
