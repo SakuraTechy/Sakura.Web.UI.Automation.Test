@@ -556,7 +556,7 @@ public class ExtentReportGenerateService implements IReporter {
 //        a = a+1;
 //        log.info(a);
 //        
-//        String ApiUrl = "http://172.19.5.222:8084/system/automation/uploadResults";
+//        String ApiUrl = "http://172.19.5.226:8084/system/automation/uploadResults";
 //		String Param = "{\"projectName\":\"AAS_TEST\",\"versionName\":\"V6_5_1SP001D003\",\"sceneId\":\"AAS_WS_SMOKE_026\",\"casePass\":4112,\"caseFail\":0,\"caseSkip\":0,\"stepPass\":10,\"stepFail\":0,\"stepSkip\":2}";
 //        try {
 //			HttpRequestUtil.SendPut(ApiUrl,Param);
