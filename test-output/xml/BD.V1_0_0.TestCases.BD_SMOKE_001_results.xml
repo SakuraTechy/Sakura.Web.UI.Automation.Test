@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="百度搜索场景测试"
+           tests="2"
+           failures="0"
+           errors="0"
+           skipped="0"
+           time="6.813">
+  <properties />
+  
+  
+            <testcase name="BD_002" time="2.940" classname="BD.V1_0_0.TestCases.BD_SMOKE_001" />
+                <testcase name="BD_001" time="3.873" classname="BD.V1_0_0.TestCases.BD_SMOKE_001" />
+      
+</testsuite>
