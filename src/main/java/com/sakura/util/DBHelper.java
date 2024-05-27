@@ -47,7 +47,7 @@ public class DBHelper {
     private static final String Oracle_TDRIVER = ConfigUtil.getProperty("Oracle.jdbc.Tdriver", ConstantsUtil.CONFIG_JDBC);
 
     private static final String Oracle_TURL = ConfigUtil.getProperty("Oracle.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
-    
+
     private static final int Oracle_TPort = Integer.valueOf(ConfigUtil.getProperty("Oracle.jdbc.Tport", ConstantsUtil.CONFIG_JDBC));
 
     private static final String Oracle_TUSERNAME = ConfigUtil.getProperty("Oracle.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
@@ -73,7 +73,7 @@ public class DBHelper {
     private static final String MySql_TDRIVER = ConfigUtil.getProperty("MySql.jdbc.Tdriver", ConstantsUtil.CONFIG_JDBC);
 
     private static final String MySql_TURL = ConfigUtil.getProperty("MySql.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
-    
+
     private static final int MySql_TPort = Integer.valueOf(ConfigUtil.getProperty("MySql.jdbc.Tport", ConstantsUtil.CONFIG_JDBC));
 
     private static final String MySql_TUSERNAME = ConfigUtil.getProperty("MySql.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
@@ -152,6 +152,24 @@ public class DBHelper {
 
     private static final String MySqlSSH_TPASSWORD = ConfigUtil.getProperty("MySql.jdbc.ssh.Tpassword", ConstantsUtil.CONFIG_JDBC);
 
+    private static final String DM_FDRIVER = ConfigUtil.getProperty("DM.jdbc.Fdriver", ConstantsUtil.CONFIG_JDBC);
+    private static final String DM_FURL = ConfigUtil.getProperty("DM.jdbc.Furl", ConstantsUtil.CONFIG_JDBC);
+    private static final int DM_FPort = Integer.valueOf(ConfigUtil.getProperty("DM.jdbc.Fport", ConstantsUtil.CONFIG_JDBC));
+    private static final String DM_FUSERNAME = ConfigUtil.getProperty("DM.jdbc.Fusername", ConstantsUtil.CONFIG_JDBC);
+    private static final String DM_FPASSWORD = ConfigUtil.getProperty("DM.jdbc.Fpassword", ConstantsUtil.CONFIG_JDBC);
+
+    private static final String DM_DDRIVER = ConfigUtil.getProperty("DM.jdbc.Ddriver", ConstantsUtil.CONFIG_JDBC);
+    private static final String DM_DURL = ConfigUtil.getProperty("DM.jdbc.Durl", ConstantsUtil.CONFIG_JDBC);
+    private static final int DM_DPort = Integer.valueOf(ConfigUtil.getProperty("DM.jdbc.Dport", ConstantsUtil.CONFIG_JDBC));
+    private static final String DM_DUSERNAME = ConfigUtil.getProperty("DM.jdbc.Dusername", ConstantsUtil.CONFIG_JDBC);
+    private static final String DM_DPASSWORD = ConfigUtil.getProperty("DM.jdbc.Dpassword", ConstantsUtil.CONFIG_JDBC);
+
+    private static final String DM_TDRIVER = ConfigUtil.getProperty("DM.jdbc.Tdriver", ConstantsUtil.CONFIG_JDBC);
+    private static final String DM_TURL = ConfigUtil.getProperty("DM.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
+    private static final int DM_TPort = Integer.valueOf(ConfigUtil.getProperty("DM.jdbc.Tport", ConstantsUtil.CONFIG_JDBC));
+    private static final String DM_TUSERNAME = ConfigUtil.getProperty("DM.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
+    private static final String DM_TPASSWORD = ConfigUtil.getProperty("DM.jdbc.Tpassword", ConstantsUtil.CONFIG_JDBC);
+
     private static ResultSet rs;
     public static Statement sm;
     private static Connection con;
@@ -159,7 +177,7 @@ public class DBHelper {
 
     /**
      * 数据库插入
-     * 
+     *
      * @param sql
      * @return
      */
@@ -169,7 +187,7 @@ public class DBHelper {
 
     /**
      * 数据库删除
-     * 
+     *
      * @param sql
      * @return
      */
@@ -179,7 +197,7 @@ public class DBHelper {
 
     /**
      * 数据库修改
-     * 
+     *
      * @param sql
      * @return
      */
@@ -189,7 +207,7 @@ public class DBHelper {
 
     /**
      * 执行数据库操作
-     * 
+     *
      * @param sql
      * @param type
      * @return
@@ -217,7 +235,7 @@ public class DBHelper {
 
     /**
      * 数据库查询
-     * 
+     *
      * @param sql
      * @return
      */
@@ -258,7 +276,7 @@ public class DBHelper {
 
     /**
      * 指定SQL语句,执行查询操作,并打印结果
-     * 
+     *
      * @param sql
      * @return
      */
@@ -352,7 +370,7 @@ public class DBHelper {
 
     /**
      * 执行存储过程,带参数
-     * 
+     *
      * @param procedure
      * @param params
      * @return
@@ -463,7 +481,7 @@ public class DBHelper {
 //	ps.setString(2, "小赵");
 //	ps.execute();
 
-    public static void checkConnection(String DataType, String DataEnviron, String DataName,String Port, String DataBase) {
+    public static void checkConnection1(String DataType, String DataEnviron, String DataName,String Port, String DataBase) {
         switch (DataType) {
             case "Oracle":
                 checkConnection_Oracle(DataEnviron, DataName,Port, DataBase);
@@ -477,6 +495,33 @@ public class DBHelper {
             case "SSHPassWordMySql(":
                 checkConnect_SSHPassWordMySql(DataEnviron, DataBase);
                 break;
+        }
+    }
+
+    public static void checkConnection(String DataType, String DataEnviron, String DataName,String Port, String DataBase) {
+        try {
+            if (con == null || con.isClosed()) {
+                switch (DataType) {
+                    case "Oracle":
+                        Connect_Oracle(DataEnviron, DataName,Port,DataBase);
+                        break;
+                    case "MySql":
+                        Connect_MySql(DataEnviron, DataName,Port, DataBase);
+                        break;
+                    case "SSHKeyMySql":
+                        Connect_SSHKeyMySql(DataEnviron, DataBase);
+                        break;
+                    case "SSHPassWordMySql(":
+                        Connect_SSHPassWordMySql(DataEnviron, DataBase);
+                        break;
+                    case "DM":
+                        Connect_DM(DataEnviron, DataName, Port, DataBase);
+                        break;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("", e);
         }
     }
 
@@ -522,7 +567,7 @@ public class DBHelper {
 
     /**
      * 连接Oracle数据库
-     * 
+     *
      * @throws Exception
      */
     public static void Connect_Oracle(String DataEnviron, String DataName,String Port, String DataBase) throws Exception {
@@ -532,17 +577,20 @@ public class DBHelper {
                 con = DriverManager.getConnection(Oracle_FURL + "" + DataBase + "", Oracle_FUSERNAME, Oracle_FPASSWORD);
                 sm = con.createStatement();
             }
-            if ("测试环境".equals(DataEnviron)) {
-                Class.forName(Oracle_TDRIVER);
-                String Oracle_TURL= ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
-                String Oracle_TUSERNAME = ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
-                String Oracle_TPASSWORD = ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Tpassword", ConstantsUtil.CONFIG_JDBC);
-                con = DriverManager.getConnection("jdbc:oracle:thin:@"+Oracle_TURL+":"+Port+":"+DataBase+"" , Oracle_TUSERNAME, Oracle_TPASSWORD);
-                sm = con.createStatement();
-            }
             if ("开发环境".equals(DataEnviron)) {
                 Class.forName(Oracle_DDRIVER);
                 con = DriverManager.getConnection(Oracle_DURL, Oracle_DUSERNAME, Oracle_DPASSWORD);
+                sm = con.createStatement();
+            }
+            if ("测试环境".equals(DataEnviron)) {
+                Class.forName(Oracle_TDRIVER);
+                String Oracle_TURL= ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
+                if("".equals(Port)) {
+                    Port = ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Tport", ConstantsUtil.CONFIG_JDBC);
+                }
+                String Oracle_TUSERNAME = ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
+                String Oracle_TPASSWORD = ConfigUtil.getProperty(""+DataName+"_Oracle.jdbc.Tpassword", ConstantsUtil.CONFIG_JDBC);
+                con = DriverManager.getConnection("jdbc:oracle:thin:@"+Oracle_TURL+":"+Port+":"+DataBase+"" , Oracle_TUSERNAME, Oracle_TPASSWORD);
                 sm = con.createStatement();
             }
             log.info("数据库连接成功");
@@ -556,7 +604,7 @@ public class DBHelper {
 
     /**
      * 连接MySql数据库
-     * 
+     *
      * @throws Exception
      */
     public static void Connect_MySql(String DataEnviron, String DataName,String Port, String DataBase) throws Exception {
@@ -569,10 +617,13 @@ public class DBHelper {
             } else if ("测试环境".equals(DataEnviron)) {
                 Class.forName(MySql_TDRIVER);
                 String MySql_TURL = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
-                String MySql_TORT = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tport", ConstantsUtil.CONFIG_JDBC);        
+//                String MySql_TORT = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tport", ConstantsUtil.CONFIG_JDBC);
+                if("".equals(Port)) {
+                    Port = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tport", ConstantsUtil.CONFIG_JDBC);
+                }
                 String MySql_TUSERNAME = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
                 String MySql_TPASSWORD = ConfigUtil.getProperty(""+DataName+"_MySql.jdbc.Tpassword", ConstantsUtil.CONFIG_JDBC);
-                con = DriverManager.getConnection("jdbc:mysql://"+ MySql_TURL + ":"+MySql_TORT+"/" + DataBase + "?useUnicode=true&characterEncoding=utf-8&useSSL=false", MySql_TUSERNAME, MySql_TPASSWORD);
+                con = DriverManager.getConnection("jdbc:mysql://"+ MySql_TURL + ":"+Port+"/" + DataBase + "?useUnicode=true&characterEncoding=utf-8&useSSL=false", MySql_TUSERNAME, MySql_TPASSWORD);
                 sm = con.createStatement();
             } else if ("开发环境".equals(DataEnviron)) {
                 Class.forName(MySql_DDRIVER);
@@ -590,7 +641,7 @@ public class DBHelper {
 
     /**
      * 连接SHHMySql数据库
-     * 
+     *
      * @throws Exception
      */
     public static void Connect_SSHKeyMySql(String DataEnviron, String DataBase) throws Exception {
@@ -622,7 +673,7 @@ public class DBHelper {
 
     /**
      * 连接SSHPassWordMySql数据库
-     * 
+     *
      * @throws Exception
      */
     public static void Connect_SSHPassWordMySql(String DataEnviron, String DataBase) throws Exception {
@@ -727,6 +778,40 @@ public class DBHelper {
         } catch (Exception e) {
             e.printStackTrace();
             log.error("", e);
+        }
+    }
+
+    /**
+     * 连接DM数据库
+     *
+     * @throws Exception
+     */
+    public static void Connect_DM(String DataEnviron, String DataName,String Port, String DataBase) throws Exception {
+        try {
+            if ("正式环境".equals(DataEnviron)) {
+                Class.forName(DM_FDRIVER);
+                jdbc:dm://localhost:5236;DatabaseName=testdb;User=testuser;Password=testpass
+                con = DriverManager.getConnection(DM_FURL, DM_FUSERNAME, DM_FPASSWORD);
+                sm = con.createStatement();
+            } else if ("开发环境".equals(DataEnviron)) {
+                Class.forName(DM_DDRIVER);
+                con = DriverManager.getConnection(DM_DURL + "/schema=" + DataBase + "?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT", DM_DUSERNAME, DM_DPASSWORD);
+                sm = con.createStatement();
+            } else if ("测试环境".equals(DataEnviron)) {
+                Class.forName(DM_TDRIVER);
+                String DM_TURL = ConfigUtil.getProperty(""+DataName+"_DM.jdbc.Turl", ConstantsUtil.CONFIG_JDBC);
+                String DM_TORT = ConfigUtil.getProperty(""+DataName+"_DM.jdbc.Tport", ConstantsUtil.CONFIG_JDBC);
+                String DM_TUSERNAME = ConfigUtil.getProperty(""+DataName+"_DM.jdbc.Tusername", ConstantsUtil.CONFIG_JDBC);
+                String DM_TPASSWORD = ConfigUtil.getProperty(""+DataName+"_DM.jdbc.Tpassword", ConstantsUtil.CONFIG_JDBC);
+                con = DriverManager.getConnection("jdbc:dm://"+ DM_TURL + ":"+DM_TORT+"/schema=" + DataBase + "?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=GMT", DM_DUSERNAME, DM_DPASSWORD);
+                sm = con.createStatement();
+            }
+            log.info("数据库连接成功");
+        } catch (Exception e) {
+            String message = "数据库连接失败";
+            if (e instanceof ClassNotFoundException)
+                message = "数据库驱动类未找到";
+            throw new Exception(message, e.fillInStackTrace());
         }
     }
 
@@ -858,7 +943,7 @@ public class DBHelper {
         String[] sqls = new String[1];
 //        sqls[0] = "SELECT * FROM `555` ORDER BY df DESC;";
         sqls[0] = "SELECT * FROM \"TEST\".\"JDBC\"";
-        
+
         String[] sqls1 = new String[7];
         sqls1[0] = "DROP TABLE \"TEST\".\"JDBC\"";
         sqls1[1] = "CREATE TABLE \"TEST\".\"JDBC\" (\r\n"
@@ -867,12 +952,13 @@ public class DBHelper {
         		+ ")";
         sqls1[2] = "ALTER TABLE \"TEST\".\"JDBC\" ADD CONSTRAINT \"tableName_PK\" PRIMARY KEY (\"id\")";
         sqls1[3] = "INSERT INTO \"TEST\".\"JDBC\" VALUES (1, '小王')";
-        sqls1[4] = "INSERT INTO \"TEST\".\"JDBC\" VALUES (2, '小李')";		
+        sqls1[4] = "INSERT INTO \"TEST\".\"JDBC\" VALUES (2, '小李')";
         sqls1[5] = "DELETE FROM \"TEST\".\"JDBC\" WHERE \"id\"=2";
         sqls1[6] = "UPDATE \"TEST\".\"JDBC\" SET \"name\"='小李' WHERE \"id\"=1";
         try {
-        	checkConnection_Oracle("测试环境","AAS_DBSG","1521", "4567");
-//            checkConnection_MySql("测试环境", "4567");
+//            checkConnection_Oracle("测试环境","BD","1521", "bs_audit");
+//        	Connect_MySql("测试环境","BD","3306", "bs_audit");
+            Connect_DM("测试环境","BD","5236", "bs_audit");
             goBatchUpdate(con, sqls1);
             getBatchQuery(con, sqls);
         } catch (Exception e) {
